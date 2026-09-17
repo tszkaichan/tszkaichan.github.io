@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<base target="_top" rel="noopener noreferrer">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>O2A &amp; T2R Performance Catalog</title>
+<style>
+:root{
+  --ink:#12213b; --muted:#5b6b85; --line:#dfe5ee; --bg:#f4f6fa;
+  --o2a:#0b6ec7; --o2a-soft:#e8f2fc;
+  --t2r:#7b3fa0; --t2r-soft:#f2eaf8;
+  --ok:#1a7f5a; --wip:#b06a00; --sup:#0b6ec7;
+  --freq:#a3235e; --freq-soft:#fbeaf1;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Segoe UI",-apple-system,Roboto,Helvetica,Arial,sans-serif;line-height:1.5}
+.wrap{max-width:1240px;margin:0 auto;padding:28px 22px 60px}
+header.hero{background:linear-gradient(120deg,#12213b 0%,#1c3a63 55%,#0b6ec7 100%);
+  color:#fff;border-radius:14px;padding:30px 32px}
+header.hero h1{margin:0 0 6px;font-size:30px;letter-spacing:-.3px}
+header.hero p{margin:0;opacity:.86;max-width:820px;font-size:15px}
+.meta{margin-top:18px;display:flex;flex-wrap:wrap;gap:10px}
+.meta span{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);
+  padding:5px 12px;border-radius:999px;font-size:12.5px}
+.legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:22px;padding:12px 16px;
+  background:#fff;border:1px solid var(--line);border-radius:10px;font-size:12.5px;color:var(--muted)}
+.legend b{color:var(--ink)}
+.swatch{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px}
+.section{margin-top:34px}
+.section-head{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.pill{font-weight:700;font-size:13px;letter-spacing:.6px;padding:5px 12px;border-radius:6px;color:#fff}
+.pill.o2a{background:var(--o2a)} .pill.t2r{background:var(--t2r)}
+.section-head h2{margin:0;font-size:21px}
+.section-sub{margin:0 0 16px;color:var(--muted);font-size:14px}
+.band{display:flex;align-items:center;gap:10px;margin:24px 0 4px}
+.band h4{margin:0;font-size:13px;letter-spacing:.8px;text-transform:uppercase;color:var(--ink)}
+.band .rule{flex:1;height:1px;background:var(--line)}
+.band-sub{margin:0 0 14px;color:var(--muted);font-size:12.8px}
+
+/* ---- one metric per row ---- */
+.grid{display:flex;flex-direction:column;gap:12px}
+.card{position:relative;display:flex;align-items:center;gap:18px;width:100%;
+  min-height:96px;text-decoration:none;color:inherit;
+  background:#fff;border:1px solid var(--line);border-left:5px solid var(--o2a);
+  border-radius:11px;padding:18px 22px;transition:.15s}
+.card:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(18,33,59,.12);border-color:#c3d3e8}
+.card.t2r{border-left-color:var(--t2r)}
+.sno{flex:0 0 40px;text-align:center;font-size:13px;font-weight:700;color:var(--muted);
+  background:#eef1f6;border-radius:6px;padding:6px 0}
+.type{flex:0 0 44px;text-align:center;font-size:10px;font-weight:700;
+  padding:4px 0;border-radius:4px;letter-spacing:.3px}
+.type.sla{background:#e4f4ec;color:var(--ok)}
+.type.kpi{background:#eef1f6;color:var(--muted)}
+.type.sup{background:#e8f2fc;color:var(--sup)}
+.main{flex:1 1 auto;min-width:0}
+.main h3{margin:0 0 4px;font-size:15.5px}
+.main p{margin:0;color:var(--muted);font-size:13px}
+.side{flex:0 0 300px;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.tags{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px}
+/* Tag palette is shared by O2A and T2R rows:
+   frequency = rose, source system = grey, pending = amber.
+   Rose is used for frequency so it is distinct from the green SLA and blue SUP chips. */
+.tag{font-size:11px;padding:3px 8px;border-radius:5px;background:var(--freq-soft);color:var(--freq);font-weight:600}
+.tag.grey{background:#eef1f6;color:var(--muted)}
+.tag.wip{background:#fdf1de;color:var(--wip)}
+.go{font-size:12px;font-weight:600;color:var(--o2a);text-align:right}
+.card.t2r .go{color:var(--t2r)}
+/* placeholder note stays grey in both sections - listed after the
+   .card.t2r rule and matched on two classes so it always wins */
+.card .go.muted-go{color:#9aa7ba;font-weight:500;font-style:italic}
+.card.dead{border-left-color:#b8c2d1;cursor:default;background:#fcfcfd}
+.card.dead:hover{transform:none;box-shadow:none;border-color:var(--line)}
+
+.note{margin-top:36px;background:#fff;border:1px solid var(--line);border-left:5px solid #b8c2d1;
+  border-radius:11px;padding:18px 20px}
+.note h3{margin:0 0 8px;font-size:15px}
+.note ul{margin:0;padding-left:20px;color:var(--muted);font-size:13.4px}
+.note li{margin-bottom:5px}
+footer{margin-top:30px;color:var(--muted);font-size:12px;text-align:center}
+
+/* narrow screens: stack the row contents */
+@media (max-width:860px){
+  .card{flex-wrap:wrap;gap:10px}
+  .main{flex:1 1 100%;order:3}
+  .side{flex:1 1 100%;order:4;align-items:flex-start}
+  .tags{justify-content:flex-start}
+  .go{text-align:left}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+  <h1>O2A &amp; T2R Performance Catalog</h1>
+  <div class="meta">
+    <span>Data Management &amp; Analytics &middot; Telstra International</span>
+    <span>Updated September 2026</span>
+  </div>
+</header>
+<div class="legend">
+  <span><span class="swatch" style="background:#1a7f5a"></span><b>SLA</b> &nbsp;contracted SLA</span>
+  <span><span class="swatch" style="background:#0b6ec7"></span><b>SUP</b> &nbsp;supporting measure</span>
+  <span><span class="swatch" style="background:#a3235e"></span>&nbsp;reporting frequency</span>
+  <span><span class="swatch" style="background:#5b6b85"></span>&nbsp;source system</span>
+  <span><span class="swatch" style="background:#b06a00"></span>&nbsp;reported outside this catalog</span>
+</div>
+<!-- ============================ O2A ============================ -->
+<section class="section">
+  <div class="section-head"><span class="pill o2a">O2A</span><h2>Order to Activate</h2></div>
+  <p class="section-sub">Delivery commitment, cycle time, order quality and automation.</p>
+  <div class="band"><h4>Contracted</h4><span class="rule"></span></div>
+  <p class="band-sub">Contracted SLAs and KPIs under the Accenture agreement.</p>
+  <div class="grid">
+    <a class="card dead">
+      <span class="sno">2</span>
+      <span class="type sla">SLA</span>
+      <div class="main">
+        <h3>Episode NPS (eNPS) for Delivery (6MMC)</h3>
+        <p>Customer episode NPS across the Order-to-Activate lifecycle, 6-month moving cumulative.</p>
+      </div>
+      <div class="side">
+        <div class="tags"><span class="tag">Monthly</span><span class="tag grey">Medallia</span><span class="tag wip">CX team report</span></div>
+        <span class="go muted-go">Refer to CX team report</span>
+      </div>
+    </a>
+    <a class="card" href="https://terra.glb.telstraglobal.com/views/TDDMetOverview/TDDMetOverview" target="_top" rel="noopener noreferrer">
+      <span class="sno">3</span>
+      <span class="type sla">SLA</span>
+      <div class="main">
+        <h3>On time Delivery TDD%</h3>
+        <p>Share of new and change services handed over on or before the Target Delivery Date.</p>
+      </div>
+      <div class="side">
+        <div class="tags"><span class="tag">Monthly</span><span class="tag grey">Phoenix</span></div>
+        <span class="go">TDD Met Overview &rarr;</span>
+      </div>
+    </a>
+    <a class="card" href="https://terra.glb.telstraglobal.com/views/Book-to-BillMetrics_17624237953990/Book-to-BillMetricsbyCategory" target="_top" rel="noopener noreferrer">
+      <span class="sno">4</span>
+      <span class="type sla">SLA</span>
+      <div class="main">
+        <h3>Book-to-Bill: Overall (median)</h3>
+        <p>Median calendar days from Opportunity Closed Date to Billing Commencement Date, across DAC new provide services.</p>
+      </div>
+      <div class="side">
+        <div class="tags"><span class="tag">Quarterly</span><span class="tag grey">Phoenix</span></div>
+        <span class="go">Book-to-Bill Metrics by Category &rarr;</span>
+      </div>
+    </a>
+    <a class="card" href="https://terra.glb.telstraglobal.com/views/Book-to-BillMetrics_17624237953990/Book-to-BillMetricsbyCategory" target="_top" rel="noopener noreferrer">
+      <span class="sno">5</span>
+      <span class="type sla">SLA</span>
+      <div class="main">
+        <h3>Book-to-Bill: Category 1 (to be finalised)</h3>
+        <p>B2B median cycle time for SFO Category 1.</p>
+      </div>
+      <div class="side">
+        <div class="tags"><span class="tag">Quarterly</span><span class="tag grey">Phoenix</span></div>
+        <span class="go">Book-to-Bill Metrics by Category &rarr;</span>
+      </div>
+    </a>
+    <a class="card" href="https://terra.glb.telstraglobal.com/views/Book-to-BillMetrics_17624237953990/Book-to-BillMetricsbyCategory" target="_top" rel="noopener noreferrer">
+      <span class="sno">6</span>
+      <span class="type sla">SLA</span>
+      <div class="main">
+        <h3>Book-to-Bill: Category 2 (to be finalised)</h3>
+        <p>B2B median cycle time for SFO Category 2.</p>
+      </div>
+      <div class="side">
+        <div class="tags"><span class="tag">Quarterly</span><span class="tag grey">Phoenix</span></div>
+        <span class="go">Book-to-Bill Metrics by Category &rarr;</span>
+      </div>
+    </a>
+    <a class="card" href="https://terra.glb.telstraglobal.com/views/Book-to-BillMetrics_17624237953990/Book-to-BillMetricsbyCategory" target="_top" rel="noopener noreferrer">
+      <span class="sno">7</span>
+      <span class="type sla">SLA</span>
+      <div class="main">
+        <h3>Book-to-Bill: Category 3 (to be finalised)</h3>
+        <p>B2B median cycle time for SFO Category 3.</p>
+      </div>
+      <div class="side">
+        <div class="tags"><span class="tag">Quarterly</span><span class="tag grey">Phoenix</span></div>
+        <span class="go">Book-to-Bill Metrics by Category &rarr;</span>
+      </div>
+    </a>
+    <a class="card" href="https://terra.glb.telstraglobal.com/views/Book-to-BillMetrics_17624237953990/Book-to-BillMetricsbyCategory" target="_top" rel="noopener noreferrer">
+      <span class="sno">8</span>
+      <span class="type sla">SLA</span>
+      <div class="main">
+        <h3>Book-to-Bill: Category 4 (to be finalised)</h3>
+        <p>B2B median cycle time for SFO Category 4.</p>
+      </div>
+      <div class="side">
+        <div class="tags"><span class="tag">Quarterly</span><span class="tag grey">Phoenix</span></div>
+        <span class="go">Book-to-Bill Metrics by Category &rarr;</span>
+      </div>
+    </a>
+    <a class="card" href="https://terra.glb.telstraglobal.com/views/Book-to-BillMetrics_17624237953990/Book-to-BillMetricsbyCategory" target="_top" rel="noopener noreferrer">
+      <span class="sno">9</span>
+      <span class="type sla">SLA</span>
+      <div class="main">
+        <h3>Book-to-Bill: Category 5 (to be finalised)</h3>
+        <p>B2B median cycle time for SFO Category 5.</p>
+      </div>
+      <div class="side">
+        <div class="tags"><span class="tag">Quarterly</span><span class="tag grey">Phoenix</span></div>
+        <span class="go">Book-to-Bill Metrics by Category &rarr;</span>
+      </div>
+    </a>
+  </div>
+  <div class="band"><h4>Supported</h4><span class="rule"></span></div>
+  <p class="band-sub">Supporting measures of overall partnership and program success.</p>
+  <div class="grid">
+    <a class="card" href="https://terra.glb.telstraglobal.com/views/ReworkedCancelledv3/ReworkandCancelledTrend" target="_top" rel="noopener noreferrer">
+      <span class="sno">11</span>
+      <span class="type sup">SUP</span>
+      <div class="main">
+        <h3>DTOW %</h3>
+        <p>Share of DAC new provide SFOs that went through DTOW-related rework or cancellation.</p>
+      </div>
+      <div class="side">
+        <div class="tags"><span class="tag">Quarterly</span><span class="tag grey">Phoenix</span></div>
+        <span class="go">Rework and Cancelled Trend &rarr;</span>
+      </div>
+    </a>
+    <a class="card" href="https://terra.glb.telstraglobal.com/views/ReworkedCancelledv3/ReworkandCancelledTrend" target="_top" rel="noopener noreferrer">
+      <span class="sno">12</span>
+      <span class="type sup">SUP</span>
+      <div class="main">
+        <h3>Rework Cycle Time</h3>
+        <p>Median elapsed calendar days from rework case creation to closure across an order.</p>
+      </div>
+      <div class="side">
+        <div class="tags"><span class="tag">Monthly</span><span class="tag grey">Phoenix</span></div>
+        <span class="go">Rework and Cancelled Trend &rarr;</span>
+      </div>
+    </a>
+    <a class="card" href="https://terra.glb.telstraglobal.com/views/TDDMetOverview/TDDMetOverview" target="_top" rel="noopener noreferrer">
+      <span class="sno">14</span>
+      <span class="type sup">SUP</span>
+      <div class="main">
+        <h3>TDD Changes per Order</h3>
+        <p>Average number of Target Delivery Date changes per order, tracked via SFO field history.</p>
+      </div>
+      <div class="side">
+        <div class="tags"><span class="tag">Monthly</span><span class="tag grey">Phoenix</span></div>
+        <span class="go">TDD Met Overview &rarr;</span>
+      </div>
+    </a>
+    <a class="card" href="https://terra.glb.telstraglobal.com/views/CRDMetOverview/CRDMetOverview" target="_top" rel="noopener noreferrer">
+      <span class="sno">15</span>
+      <span class="type sup">SUP</span>
+      <div class="main">
+        <h3>On Time Delivery CRD Percentage</h3>
+        <p>Share of new and change services delivered on or before the Customer Required Date.</p>
+      </div>
+      <div class="side">
+        <div class="tags"><span class="tag">Monthly</span><span class="tag grey">Phoenix</span></div>
+        <span class="go">CRD Met Overview &rarr;</span>
+      </div>
+    </a>
+  </div>
+</section>
+<!-- ============================ T2R ============================ -->
+<section class="section">
+  <div class="section-head"><span class="pill t2r">T2R</span><h2>Trouble to Resolve</h2></div>
+  <p class="section-sub">Restoration, responsiveness, service desk experience and automation.</p>
+  <div class="band"><h4>Contracted</h4><span class="rule"></span></div>
+  <p class="band-sub">Contracted SLAs and KPIs under the Accenture agreement.</p>
+  <div class="grid">
+    <a class="card t2r" href="https://app.powerbi.com/Redirect?action=OpenReport&amp;appId=400411c3-b04b-4ae3-9566-979a39126fad&amp;reportObjectId=7f35c269-c695-4b61-a398-59f4e4cd2034&amp;ctid=49dfc6a3-5fb7-49f4-adea-c54e725bb854&amp;reportPage=bb3e194a9f9f43c90768&amp;pbi_source=appShareLink&amp;portalSessionId=4720e04e-d83a-4de3-bc96-eb51dc63e248" target="_top" rel="noopener noreferrer">
+      <span class="sno">16</span>
+      <span class="type sla">SLA</span>
+      <div class="main">
+        <h3>Abandonment Rate</h3>
+        <p>Percentage of customer contacts that enter a queue and disconnect before being answered by an agent.</p>
+      </div>
+      <div class="side">
+        <div class="tags"><span class="tag">Monthly</span><span class="tag grey">Amazon Connect</span></div>
+        <span class="go">Abandonment Rate &rarr;</span>
+      </div>
+    </a>
+    <a class="card t2r dead">
+      <span class="sno">17</span>
+      <span class="type sla">SLA</span>
+      <div class="main">
+        <h3>Episode NPS (eNPS) for Assurance Incidents (6MMC)</h3>
+        <p>Episode NPS for the assurance lifecycle, incidents only, 6-month moving cumulative.</p>
+      </div>
+      <div class="side">
+        <div class="tags"><span class="tag">Monthly</span><span class="tag grey">Medallia</span><span class="tag wip">CX team report</span></div>
+        <span class="go muted-go">Refer to CX team report</span>
+      </div>
+    </a>
+    <a class="card t2r dead">
+      <span class="sno">18</span>
+      <span class="type sla">SLA</span>
+      <div class="main">
+        <h3>Episode NPS (eNPS) for Assurance MACs (6MMC)</h3>
+        <p>Episode NPS for the assurance lifecycle, MACs only, 6-month moving cumulative.</p>
+      </div>
+      <div class="side">
+        <div class="tags"><span class="tag">Monthly</span><span class="tag grey">Medallia</span><span class="tag wip">CX team report</span></div>
+        <span class="go muted-go">Refer to CX team report</span>
+      </div>
+    </a>
+    <a class="card t2r" href="https://terra.glb.telstraglobal.com/views/MTTRAchievementBlended/MTTRAchievement-Overview" target="_top" rel="noopener noreferrer">
+      <span class="sno">19</span>
+      <span class="type sla">SLA</span>
+      <div class="main">
+        <h3>% MTTR Achievement</h3>
+        <p>Percentage of applicable incidents that met their MTTR SLA target, blended across incident priorities into a single achievement figure.</p>
+      </div>
+      <div class="side">
+        <div class="tags"><span class="tag">Monthly</span><span class="tag grey">Service Central</span></div>
+        <span class="go">MTTR Achievement (Blended) &rarr;</span>
+      </div>
+    </a>
+    <a class="card t2r" href="https://terra.glb.telstraglobal.com/views/FirstResponseTime/FirstResponseTime-Overview" target="_top" rel="noopener noreferrer">
+      <span class="sno">20</span>
+      <span class="type sla">SLA</span>
+      <div class="main">
+        <h3>First Response Time (mins)</h3>
+        <p>Average elapsed minutes between a call record being created and that record being converted into a service management record.</p>
+      </div>
+      <div class="side">
+        <div class="tags"><span class="tag">Monthly</span><span class="tag grey">Service Central</span></div>
+        <span class="go">First Response Time &rarr;</span>
+      </div>
+    </a>
+  </div>
+  <div class="band"><h4>Supported</h4><span class="rule"></span></div>
+  <p class="band-sub">Supporting measures of overall partnership and program success.</p>
+  <div class="grid">
+    <a class="card t2r" href="https://terra.glb.telstraglobal.com/views/FirstQualityUpdate/FirstQualityUpdate-Overview" target="_top" rel="noopener noreferrer">
+      <span class="sno">24</span>
+      <span class="type sup">SUP</span>
+      <div class="main">
+        <h3>First Quality Update</h3>
+        <p>Percentage of work items moved from Assigned to In Progress within the applicable First Quality Update SLA target.</p>
+      </div>
+      <div class="side">
+        <div class="tags"><span class="tag">Monthly</span><span class="tag grey">Service Central</span></div>
+        <span class="go">First Quality Update &rarr;</span>
+      </div>
+    </a>
+    <a class="card t2r" href="https://terra.glb.telstraglobal.com/views/MeanTimetoDeliver/MeanTimetoDeliver-Overview" target="_top" rel="noopener noreferrer">
+      <span class="sno">26</span>
+      <span class="type sup">SUP</span>
+      <div class="main">
+        <h3>MTTD for SRs (days)</h3>
+        <p>Average number of days to deliver a completed service request (RITM), across all eligible requests closed in the period.</p>
+      </div>
+      <div class="side">
+        <div class="tags"><span class="tag">Monthly</span><span class="tag grey">Service Central</span></div>
+        <span class="go">MTTD for SRs &rarr;</span>
+      </div>
+    </a>
+    <a class="card t2r" href="https://app.powerbi.com/Redirect?action=OpenReport&amp;appId=400411c3-b04b-4ae3-9566-979a39126fad&amp;reportObjectId=7f35c269-c695-4b61-a398-59f4e4cd2034&amp;ctid=49dfc6a3-5fb7-49f4-adea-c54e725bb854&amp;reportPage=bb3e194a9f9f43c90768&amp;pbi_source=appShareLink&amp;portalSessionId=4720e04e-d83a-4de3-bc96-eb51dc63e248" target="_top" rel="noopener noreferrer">
+      <span class="sno">27</span>
+      <span class="type sup">SUP</span>
+      <div class="main">
+        <h3>Grade of Service (GoS)</h3>
+        <p>Percentage of agent-handled contacts answered within 30 seconds of entering a queue (GS30).</p>
+      </div>
+      <div class="side">
+        <div class="tags"><span class="tag">Quarterly</span><span class="tag grey">Amazon Connect</span></div>
+        <span class="go">Grade of Service (30s answers) &rarr;</span>
+      </div>
+    </a>
+  </div>
+</section>
+</div>
+
+<script>
+/* Force every catalog link to open in a brand-new browser tab, even when this
+   page is embedded in an iframe (Tableau web page object, SharePoint page,
+   Teams tab) where target="_top" can be swallowed by the host frame. */
+document.addEventListener('click', function (e) {
+  var a = e.target.closest('a[href]');
+  if (!a) return;
+  var href = a.getAttribute('href');
+  if (!href || href.charAt(0) === '#' || href.indexOf('javascript:') === 0) return;
+  if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return; // let native behaviour win
+  e.preventDefault();
+  window.open(a.href, '_top', 'noopener');
+}, false);
+</script>
+</body>
+</html>
